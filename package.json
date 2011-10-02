@@ -1,0 +1,14 @@
+{ 
+	"name": "multiwaydb", 
+	"description": "A lightweight database that can load in JSON, set and get according to table and key/value pairs, and be accessed over http",
+	"version": "0.1.0",
+	"url": "http://github.com/deitch/multiwaydb",
+	"author": "Avi Deitcher <avi@deitcher.net>",
+	"engines": ["node >= 0.3"],
+	"main": "./lib/multiwaydb.js", 
+	"dependencies": {"searchjs":">=0.1.0"},
+	"repository": {
+		"type" : "git",
+		"url" : "http://github.com/deitch/multiwaydb.git"
+	}
+}
