@@ -28,6 +28,9 @@ Use: var db = require('multiwaydb');
 * db.clear(cb) - clears the entire database, and then executes cb.
 * db.listen(port) - instructs the database to listen for REST requests on port.
 
+Note: The database keeps track of the last path you used to load using init(path). If you call init() *without* a path, it will
+simply refresh from the same path as last time.
+
 REST API
 --------
 The REST API is straightforward, and works as follows.
