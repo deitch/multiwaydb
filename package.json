@@ -6,7 +6,7 @@
 	"author": "Avi Deitcher <avi@deitcher.net>",
 	"engines": ["node >= 0.3"],
 	"main": "./lib/multiwaydb.js", 
-	"dependencies": {"searchjs":">=0.1.2"},
+	"dependencies": {"searchjs":">=0.1.3"},
 	"repository": {
 		"type" : "git",
 		"url" : "http://github.com/deitch/multiwaydb.git"
