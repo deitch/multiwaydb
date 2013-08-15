@@ -117,6 +117,24 @@ describe('multiwaydb', function(){
 				});
 		  });
 		});
+		it('should reject a set for an object that does not exist', function(done){
+		  db.set("user","3",{"name":"foo","bar":"me"},function (res) {
+				res.should.eql(false);
+				db.get("user","3",function (res) {
+					res.should.eql([]);
+					done();
+				});
+		  });
+		});
+		it('should reject an update for an object that does not exist', function(done){
+		  db.update("user","3",{"name":"foo","bar":"me"},function (res) {
+				res.should.eql(false);
+				db.get("user","3",function (res) {
+					res.should.eql([]);
+					done();
+				});
+		  });
+		});
   });
 	describe('REST API', function(){
 		beforeEach(function(){
