@@ -174,6 +174,18 @@ describe('multiwaydb', function(){
 		it('should find a single object by search', function(done){
 			r.get('/user').query({search:JSON.stringify({name:"john"})}).expect(200,[].concat(raw.user["1"]),done);
 		});
+		it('should return 404 for getting unknown object', function(done){
+		  r.get('/user/100').expect(404,done);
+		});
+		it('should return 404 for putting unknown object', function(done){
+		  r.put('/user/100').type("json").send({foo:"bar"}).expect(404,done);
+		});
+		it('should return 404 for patching unknown object', function(done){
+		  r.patch('/user/100').type("json").send({foo:"bar"}).expect(404,done);
+		});
+		it('should return 404 for deleting unknown object', function(done){
+		  r.del('/user/100').expect(404,done);
+		});
 		it('should delete a single object', function(done){
 			async.series([
 				function(cb){r.del('/user/1').expect(200,cb);},
