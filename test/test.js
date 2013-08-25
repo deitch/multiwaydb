@@ -2,7 +2,7 @@
 /*global before, beforeEach, it, describe, after */
 var db = require('../lib/multiwaydb'), _ = require('lodash'), should = require('should'), request = require('supertest'),
 async = require('async'),
-path = __dirname+'/resources/db.json', port = 30000, raw = _.cloneDeep(require(path)), r;
+path = __dirname+'/resources/db.json', port = 30000, url = 'http://localhost:'+port, raw = _.cloneDeep(require(path)), r, client;
 
 
 before(function () {
@@ -13,11 +13,12 @@ describe('multiwaydb', function(){
 	before(function(){
 	  db.init(path);
 		db.listen(port);
-		r = request('http://localhost:'+port);
+		client = db.client(url);
+		r = request(url);
 	});
 	describe('administration', function(){
 	  it('should have loaded the data', function(done){
-	    db.get("user",function (res) {
+	    db.get("user",function (err,res) {
 				_.size(res).should.equal(2);
 				res.should.eql(_.values(raw.user));
 				done();
@@ -25,7 +26,7 @@ describe('multiwaydb', function(){
 	  });
 		it('should clear a table', function(done){
 		  db.clearTable("user",function () {
-				db.get("user",function (res) {
+				db.get("user",function (err,res) {
 					_.size(res).should.equal(0);
 					done();
 				});
@@ -39,7 +40,7 @@ describe('multiwaydb', function(){
 				});
 			});
 			it('should have the original data back', function(done){
-				db.get("user",function (res) {
+				db.get("user",function (err,res) {
 					res.should.eql(_.values(raw.user));
 					done();
 				});
@@ -51,29 +52,29 @@ describe('multiwaydb', function(){
 		  db.init();
 		});
 		it('should retrieve all objects', function(done){
-		  db.get("user",function (res) {
+		  db.get("user",function (err,res) {
 				_.size(res).should.eql(_.size(raw.user));
 				res.should.eql(_.values(raw.user));
 				done();
 		  });
 		});
 		it('should retrieve a single object', function(done){
-		  db.get("user","1",function (res) {
+		  db.get("user","1",function (err,res) {
 				_.size(res).should.eql(1);
 				res.should.eql([].concat(raw.user["1"]));
 				done();
 		  });
 		});
 		it('should retrieve multiple objects', function(done){
-		  db.get("user",["1","2"],function (res) {
+		  db.get("user",["1","2"],function (err,res) {
 				_.size(res).should.eql(2);
 				res.should.eql([].concat(raw.user["1"],raw.user["2"]));
 				done();
 		  });
 		});
-		it('should replace a single object', function(done){
+		it('should replace a single object with set', function(done){
 		  db.set("user","1",{"name":"foo","bar":"me"},function () {
-				db.get("user","1",function (res) {
+				db.get("user","1",function (err,res) {
 					res.length.should.eql(1);
 					res[0].name.should.eql("foo");
 					res[0].bar.should.eql("me");
@@ -82,9 +83,20 @@ describe('multiwaydb', function(){
 				});
 		  });
 		});
-		it('should update a single object', function(done){
+		it('should replace a single object with update', function(done){
 		  db.update("user","1",{"name":"foo","bar":"me"},function () {
-				db.get("user","1",function (res) {
+				db.get("user","1",function (err,res) {
+					res.length.should.eql(1);
+					res[0].name.should.eql("foo");
+					res[0].bar.should.eql("me");
+					should.not.exist(res[0].phone);
+					done();
+				});
+		  });
+		});
+		it('should patch a single object', function(done){
+		  db.patch("user","1",{"name":"foo","bar":"me"},function () {
+				db.get("user","1",function (err,res) {
 					res.length.should.eql(1);
 					res[0].name.should.eql("foo");
 					res[0].bar.should.eql("me");
@@ -95,8 +107,8 @@ describe('multiwaydb', function(){
 		});
 		it('should create a single object', function(done){
 			var obj = {"name":"foo","bar":"me"};
-		  db.create("user",obj,function (id) {
-				db.get("user",id,function (res) {
+		  db.create("user",obj,function (err,id) {
+				db.get("user",id,function (err,res) {
 					res.length.should.eql(1);
 					res.should.eql([_.extend({},obj,{id:id})]);
 					done();
@@ -104,32 +116,42 @@ describe('multiwaydb', function(){
 		  });
 		});
 		it('should find a single object by search', function(done){
-		  db.find("user",{name:"john"},function (res) {
+		  db.find("user",{name:"john"},function (err,res) {
 				res.should.eql([].concat(raw.user["1"]));
 				done();
 		  });
 		});
-		it('should delete a single object', function(done){
-		  db.del("user","1",function (res) {
-				db.get("user",function (res) {
+		it('should delete a single object with db.del', function(done){
+		  db.del("user","1",function (err,res) {
+				db.get("user",function (err,res) {
+					res.should.eql([].concat(raw.user["2"]));
+					done();
+				});
+		  });
+		});
+		it('should delete a single object with db.destroy', function(done){
+		  db.destroy("user","1",function (err,res) {
+				db.get("user",function (err,res) {
 					res.should.eql([].concat(raw.user["2"]));
 					done();
 				});
 		  });
 		});
 		it('should reject a set for an object that does not exist', function(done){
-		  db.set("user","3",{"name":"foo","bar":"me"},function (res) {
-				res.should.eql(false);
-				db.get("user","3",function (res) {
+		  db.set("user","3",{"name":"foo","bar":"me"},function (err,res) {
+				should.not.exist(res);
+				err.should.eql("keynotfound");
+				db.get("user","3",function (err,res) {
 					res.should.eql([]);
 					done();
 				});
 		  });
 		});
 		it('should reject an update for an object that does not exist', function(done){
-		  db.update("user","3",{"name":"foo","bar":"me"},function (res) {
-				res.should.eql(false);
-				db.get("user","3",function (res) {
+		  db.update("user","3",{"name":"foo","bar":"me"},function (err,res) {
+				should.not.exist(res);
+				err.should.eql("keynotfound");
+				db.get("user","3",function (err,res) {
 					res.should.eql([]);
 					done();
 				});
@@ -192,5 +214,115 @@ describe('multiwaydb', function(){
 				function(cb){r.get('/user/1').expect(404,cb);}
 			],done);
 		});	  
+	});
+	describe('Remote API', function(){
+		beforeEach(function(){
+		  db.init();
+		}); 
+		it('should retrieve all objects', function(done){
+		  client.get("user",function (err,res) {
+				_.size(res).should.eql(_.size(raw.user));
+				res.should.eql(_.values(raw.user));
+				done();
+		  });
+		});
+		it('should retrieve a single object', function(done){
+		  client.get("user","1",function (err,res) {
+				_.size(res).should.eql(1);
+				res.should.eql([].concat(raw.user["1"]));
+				done();
+		  });
+		});
+		it('should retrieve multiple objects', function(done){
+		  client.get("user",["1","2"],function (err,res) {
+				_.size(res).should.eql(2);
+				res.should.eql([].concat(raw.user["1"],raw.user["2"]));
+				done();
+		  });
+		});
+		it('should replace a single object with set', function(done){
+		  client.set("user","1",{"name":"foo","bar":"me"},function () {
+				client.get("user","1",function (err,res) {
+					res.length.should.eql(1);
+					res[0].name.should.eql("foo");
+					res[0].bar.should.eql("me");
+					should.not.exist(res[0].phone);
+					done();
+				});
+		  });
+		});
+		it('should replace a single object with update', function(done){
+		  client.update("user","1",{"name":"foo","bar":"me"},function () {
+				client.get("user","1",function (err,res) {
+					res.length.should.eql(1);
+					res[0].name.should.eql("foo");
+					res[0].bar.should.eql("me");
+					should.not.exist(res[0].phone);
+					done();
+				});
+		  });
+		});
+		it('should patch a single object', function(done){
+		  client.patch("user","1",{"name":"foo","bar":"me"},function () {
+				client.get("user","1",function (err,res) {
+					res.length.should.eql(1);
+					res[0].name.should.eql("foo");
+					res[0].bar.should.eql("me");
+					res[0].phone.should.eql(raw.user["1"].phone);
+					done();
+				});
+		  });
+		});
+		it('should create a single object', function(done){
+			var obj = {"name":"foo","bar":"me"};
+		  client.create("user",obj,function (err,id) {
+				client.get("user",id,function (err,res) {
+					res.length.should.eql(1);
+					res.should.eql([_.extend({},obj,{id:id})]);
+					done();
+				});
+		  });
+		});
+		it('should find a single object by search', function(done){
+		  client.find("user",{name:"john"},function (err,res) {
+				res.should.eql([].concat(raw.user["1"]));
+				done();
+		  });
+		});
+		it('should delete a single object with db.del', function(done){
+		  client.del("user","1",function (err,res) {
+				client.get("user",function (err,res) {
+					res.should.eql([].concat(raw.user["2"]));
+					done();
+				});
+		  });
+		});
+		it('should delete a single object with db.destroy', function(done){
+		  client.destroy("user","1",function (err,res) {
+				client.get("user",function (err,res) {
+					res.should.eql([].concat(raw.user["2"]));
+					done();
+				});
+		  });
+		});
+		it('should reject a set for an object that does not exist', function(done){
+		  client.set("user","3",{"name":"foo","bar":"me"},function (err,res) {
+				should.not.exist(res);
+				client.get("user","3",function (err,res) {
+					should.not.exist(res);
+					done();
+				});
+		  });
+		});
+		it('should reject an update for an object that does not exist', function(done){
+		  client.update("user","3",{"name":"foo","bar":"me"},function (err,res) {
+				should.not.exist(res);
+				err.should.equal("keynotfound");
+				client.get("user","3",function (err,res) {
+					should.not.exist(res);
+					done();
+				});
+		  });
+		});
 	});
 });
