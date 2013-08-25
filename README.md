@@ -63,6 +63,18 @@ The direct API provides access to the data *from within the app that initialized
 
 For all API calls except `create`, an entry of "key" **must** already exist.
 
+### What is returned?
+
+The callback always has the signature `callback(err,res)`. If there are no errors, then `err` will be undefined or null.
+
+The value of `res` depends on each case. In all cases, if there is an error, then `res` is the string value of the error.
+
+* `set`/`update`/`patch`: no meaning.
+* `create`: key of the newly created object.
+* `get`: If a single item was requested as `get("user","123")` then a single JavaScript object as `{id:"123",name:"john"}`. If multiple items were requested as `get("user",["123","456"])` then an array of such JavaScript objects as `[{id:"123",name:"john"},{id:"456",name:"sally"}]`
+* `find`: Always an array of as many objects as were found, or null if none found.
+* `del`/`destroy`: no meaning.
+
 
 ## REST API
 The REST API provides the same CRUD functionality as the direct API, but over HTTP.
@@ -124,7 +136,8 @@ db.destroy(table,key,callback) // alias for db.del()
 
 
 ## Breaking Changes
-As of v0.5.0, all Direct API and Remote API methods invoke the callback with the following signature:
+As of v0.4.0, all Direct API and Remote API methods invoke the callback with the following signature:
+
 
     callback(err,res);
 		

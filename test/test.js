@@ -60,8 +60,7 @@ describe('multiwaydb', function(){
 		});
 		it('should retrieve a single object', function(done){
 		  db.get("user","1",function (err,res) {
-				_.size(res).should.eql(1);
-				res.should.eql([].concat(raw.user["1"]));
+				res.should.eql(raw.user["1"]);
 				done();
 		  });
 		});
@@ -75,10 +74,9 @@ describe('multiwaydb', function(){
 		it('should replace a single object with set', function(done){
 		  db.set("user","1",{"name":"foo","bar":"me"},function () {
 				db.get("user","1",function (err,res) {
-					res.length.should.eql(1);
-					res[0].name.should.eql("foo");
-					res[0].bar.should.eql("me");
-					should.not.exist(res[0].phone);
+					res.name.should.eql("foo");
+					res.bar.should.eql("me");
+					should.not.exist(res.phone);
 					done();
 				});
 		  });
@@ -86,10 +84,9 @@ describe('multiwaydb', function(){
 		it('should replace a single object with update', function(done){
 		  db.update("user","1",{"name":"foo","bar":"me"},function () {
 				db.get("user","1",function (err,res) {
-					res.length.should.eql(1);
-					res[0].name.should.eql("foo");
-					res[0].bar.should.eql("me");
-					should.not.exist(res[0].phone);
+					res.name.should.eql("foo");
+					res.bar.should.eql("me");
+					should.not.exist(res.phone);
 					done();
 				});
 		  });
@@ -97,10 +94,9 @@ describe('multiwaydb', function(){
 		it('should patch a single object', function(done){
 		  db.patch("user","1",{"name":"foo","bar":"me"},function () {
 				db.get("user","1",function (err,res) {
-					res.length.should.eql(1);
-					res[0].name.should.eql("foo");
-					res[0].bar.should.eql("me");
-					res[0].phone.should.eql(raw.user["1"].phone);
+					res.name.should.eql("foo");
+					res.bar.should.eql("me");
+					res.phone.should.eql(raw.user["1"].phone);
 					done();
 				});
 		  });
@@ -109,8 +105,7 @@ describe('multiwaydb', function(){
 			var obj = {"name":"foo","bar":"me"};
 		  db.create("user",obj,function (err,id) {
 				db.get("user",id,function (err,res) {
-					res.length.should.eql(1);
-					res.should.eql([_.extend({},obj,{id:id})]);
+					res.should.eql(_.extend({},obj,{id:id}));
 					done();
 				});
 		  });
@@ -142,7 +137,7 @@ describe('multiwaydb', function(){
 				should.not.exist(res);
 				err.should.eql("keynotfound");
 				db.get("user","3",function (err,res) {
-					res.should.eql([]);
+					should.not.exist(res);
 					done();
 				});
 		  });
@@ -152,7 +147,7 @@ describe('multiwaydb', function(){
 				should.not.exist(res);
 				err.should.eql("keynotfound");
 				db.get("user","3",function (err,res) {
-					res.should.eql([]);
+					should.not.exist(res);
 					done();
 				});
 		  });
@@ -166,7 +161,7 @@ describe('multiwaydb', function(){
 			r.get('/user').expect(200,_.values(raw.user),done);
 		});
 		it('should retrieve a single object', function(done){
-			r.get('/user/1').expect(200,[].concat(raw.user["1"]),done);
+			r.get('/user/1').expect(200,raw.user["1"],done);
 		});
 		it('should retrieve multiple objects', function(done){
 			r.get('/user/1,2').expect(200,[].concat(raw.user["1"],raw.user["2"]),done);
@@ -175,7 +170,7 @@ describe('multiwaydb', function(){
 			var obj = {name:"foo",bar:"me"};
 			async.series([
 				function (cb) {r.put('/user/1').type('json').send(obj).expect(200,cb);},
-				function (cb) {r.get('/user/1').expect(200,[].concat({name:"foo",bar:"me"}),cb);}
+				function (cb) {r.get('/user/1').expect(200,{name:"foo",bar:"me"},cb);}
 			],done);
 			
 		});
@@ -183,14 +178,14 @@ describe('multiwaydb', function(){
 			var obj = {name:"foo",bar:"me"};
 			async.series([
 				function(cb){r.patch('/user/1').type('json').send(obj).expect(200,cb);},
-				function(cb){r.get('/user/1').expect(200,[].concat(_.extend({},raw.user["1"],{"name":"foo","bar":"me"})),cb);}
+				function(cb){r.get('/user/1').expect(200,_.extend({},raw.user["1"],{"name":"foo","bar":"me"}),cb);}
 			],done);
 		});
 		it('should create a single object', function(done){
 			var obj = {"name":"foo","bar":"me"};
 			async.waterfall([
 				function(cb){r.post('/user').type('json').send(obj).expect(201,cb);},
-				function(res,cb){r.get('/user/'+res.text).expect(200,[].concat(_.extend({},obj,{id:res.text})),cb);}
+				function(res,cb){r.get('/user/'+res.text).expect(200,_.extend({},obj,{id:res.text}),cb);}
 			],done);
 		});
 		it('should find a single object by search', function(done){
@@ -228,8 +223,7 @@ describe('multiwaydb', function(){
 		});
 		it('should retrieve a single object', function(done){
 		  client.get("user","1",function (err,res) {
-				_.size(res).should.eql(1);
-				res.should.eql([].concat(raw.user["1"]));
+				res.should.eql(raw.user["1"]);
 				done();
 		  });
 		});
@@ -243,10 +237,9 @@ describe('multiwaydb', function(){
 		it('should replace a single object with set', function(done){
 		  client.set("user","1",{"name":"foo","bar":"me"},function () {
 				client.get("user","1",function (err,res) {
-					res.length.should.eql(1);
-					res[0].name.should.eql("foo");
-					res[0].bar.should.eql("me");
-					should.not.exist(res[0].phone);
+					res.name.should.eql("foo");
+					res.bar.should.eql("me");
+					should.not.exist(res.phone);
 					done();
 				});
 		  });
@@ -254,10 +247,9 @@ describe('multiwaydb', function(){
 		it('should replace a single object with update', function(done){
 		  client.update("user","1",{"name":"foo","bar":"me"},function () {
 				client.get("user","1",function (err,res) {
-					res.length.should.eql(1);
-					res[0].name.should.eql("foo");
-					res[0].bar.should.eql("me");
-					should.not.exist(res[0].phone);
+					res.name.should.eql("foo");
+					res.bar.should.eql("me");
+					should.not.exist(res.phone);
 					done();
 				});
 		  });
@@ -265,10 +257,9 @@ describe('multiwaydb', function(){
 		it('should patch a single object', function(done){
 		  client.patch("user","1",{"name":"foo","bar":"me"},function () {
 				client.get("user","1",function (err,res) {
-					res.length.should.eql(1);
-					res[0].name.should.eql("foo");
-					res[0].bar.should.eql("me");
-					res[0].phone.should.eql(raw.user["1"].phone);
+					res.name.should.eql("foo");
+					res.bar.should.eql("me");
+					res.phone.should.eql(raw.user["1"].phone);
 					done();
 				});
 		  });
@@ -277,8 +268,7 @@ describe('multiwaydb', function(){
 			var obj = {"name":"foo","bar":"me"};
 		  client.create("user",obj,function (err,id) {
 				client.get("user",id,function (err,res) {
-					res.length.should.eql(1);
-					res.should.eql([_.extend({},obj,{id:id})]);
+					res.should.eql(_.extend({},obj,{id:id}));
 					done();
 				});
 		  });
