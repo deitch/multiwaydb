@@ -63,6 +63,20 @@ The direct API provides access to the data *from within the app that initialized
 
 For all API calls except `create`, an entry of "key" **must** already exist.
 
+For create calls, you have 2 choices for creation of the key:
+
+1. If `value.id` already exists, it will use it. In the case of a conflict, it will return an error "conflict" or a `409` for the REST API
+2. If `value.id` does not exist, it will create one.
+
+The algorithm for creating a new unique ID is as follows:
+
+    sha1.hash(new Date().toString().split("").sort(function(){return Math.round(Math.random())-0.5;}).join("")).substr(0,12)
+		
+Which essentially takes today's date as a full ISO string, randomly jumbles the characters, SHA1 hashes them, and then takes the first 12 characters. **This is more than good enough for most non-production use**. Actually, it is good enough for a ot of lightweight production use too.
+
+For production use, you should use your own algorithms, or perhaps GUIDs. Either way, if you do not want to use this algorithm just override it by setting your own `id` property on the object.
+
+
 ### What is returned?
 
 The callback always has the signature `callback(err,res)`. If there are no errors, then `err` will be undefined or null.
