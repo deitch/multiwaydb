@@ -1,5 +1,5 @@
-/*jslint node:true, nomen:true, debug:true */
-/*global before, beforeEach, it, describe, after */
+/*jshint node:true, nomen:true, debug:true, unused:vars */
+/*global before, beforeEach, it, describe */
 var db = require('../lib/multiwaydb'), _ = require('lodash'), should = require('should'), request = require('supertest'),
 async = require('async'),
 path = __dirname+'/resources/db.json', port = 30000, url = 'http://localhost:'+port, raw = _.cloneDeep(require(path)), r, client;
@@ -101,11 +101,29 @@ describe('multiwaydb', function(){
 				});
 		  });
 		});
-		it('should create a single object', function(done){
+		it('should create a single object when not given ID', function(done){
 			var obj = {"name":"foo","bar":"me"};
 		  db.create("user",obj,function (err,id) {
 				db.get("user",id,function (err,res) {
 					res.should.eql(_.extend({},obj,{id:id}));
+					done();
+				});
+		  });
+		});
+		it('should create a single object when given valid new ID', function(done){
+			var obj = {"name":"foo","bar":"me","id":"1234567"};
+		  db.create("user",obj,function (err,id) {
+				db.get("user",id,function (err,res) {
+					res.should.eql(obj);
+					done();
+				});
+		  });
+		});
+		it('should fail to create a single object when given conflicting ID', function(done){
+			var obj = {"name":"foo","bar":"me","id":"1234567"};
+		  db.create("user",obj,function (err,id) {
+				db.create("user",obj,function (err,id) {
+					err.should.eql("conflict");
 					done();
 				});
 		  });
@@ -181,11 +199,25 @@ describe('multiwaydb', function(){
 				function(cb){r.get('/user/1').expect(200,_.extend({},raw.user["1"],{"name":"foo","bar":"me"}),cb);}
 			],done);
 		});
-		it('should create a single object', function(done){
+		it('should create a single object when not given ID', function(done){
 			var obj = {"name":"foo","bar":"me"};
 			async.waterfall([
 				function(cb){r.post('/user').type('json').send(obj).expect(201,cb);},
 				function(res,cb){r.get('/user/'+res.text).expect(200,_.extend({},obj,{id:res.text}),cb);}
+			],done);
+		});
+		it('should create a single object when given new ID', function(done){
+			var obj = {"name":"foo","bar":"me","id":"1234567"};
+			async.waterfall([
+				function(cb){r.post('/user').type('json').send(obj).expect(201,cb);},
+				function(res,cb){r.get('/user/'+res.text).expect(200,obj,cb);}
+			],done);
+		});
+		it('should fail to create a single object when given conflicting ID', function(done){
+			var obj = {"name":"foo","bar":"me","id":"1234567"};
+			async.waterfall([
+				function(cb){r.post('/user').type('json').send(obj).expect(201,cb);},
+				function(res,cb){r.post('/user').type('json').send(obj).expect(409,cb);}
 			],done);
 		});
 		it('should find a single object by search', function(done){
@@ -264,11 +296,29 @@ describe('multiwaydb', function(){
 				});
 		  });
 		});
-		it('should create a single object', function(done){
+		it('should create a single object when not given ID', function(done){
 			var obj = {"name":"foo","bar":"me"};
 		  client.create("user",obj,function (err,id) {
 				client.get("user",id,function (err,res) {
 					res.should.eql(_.extend({},obj,{id:id}));
+					done();
+				});
+		  });
+		});
+		it('should create a single object when given new ID', function(done){
+			var obj = {"name":"foo","bar":"me","id":"1234567"};
+		  client.create("user",obj,function (err,id) {
+				client.get("user",id,function (err,res) {
+					res.should.eql(obj);
+					done();
+				});
+		  });
+		});
+		it('should fail to create a single object when given conflicting ID', function(done){
+			var obj = {"name":"foo","bar":"me","id":"1234567"};
+		  client.create("user",obj,function (err,id) {
+				client.create("user",obj,function (err,res) {
+					err.should.eql("conflict");
 					done();
 				});
 		  });
