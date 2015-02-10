@@ -136,6 +136,54 @@ describe('multiwaydb', function(){
 				done();
 		  });
 		});
+		it('should find multiple objects by search', function(done){
+		  db.find("user",{gender:"male"},function (err,res) {
+				res.should.eql(_.where(orig,{gender:"male"}));
+				done();
+		  });
+		});
+		
+		
+		
+		it('should enable ascending sort', function(done){
+		  db.find("user",{'$s.sort':"age"},function (err,res) {
+				res.should.eql(_.sortBy(orig,"age"));
+				done();
+		  });
+		});
+		it('should enable descending sort', function(done){
+		  db.find("user",{'$s.sort':"-age"},function (err,res) {
+				res.should.eql(_.sortBy(orig,"age").reverse());
+				done();
+		  });
+		});
+		it('should enable count to limit', function(done){
+		  db.find("user",{'$s.count':"2"},function (err,res) {
+				res.should.eql(orig.slice(0,2));
+				done();
+		  });
+		});
+		it('should enable count with ascending sort', function(done){
+		  db.find("user",{'$s.count':"2",'$s.sort':'age'},function (err,res) {
+				res.should.eql(_.sortBy(orig,"age").slice(0,2));
+				done();
+		  });
+		});
+		it('should enable count with descending sort', function(done){
+		  db.find("user",{'$s.count':"2",'$s.sort':'-age'},function (err,res) {
+				res.should.eql(_.sortBy(orig,"age").reverse().slice(0,2));
+				done();
+		  });
+		});
+		it('should enable search with count and sort', function(done){
+		  db.find("user",{gender:'male','$s.count':"2",'$s.sort':'age'},function (err,res) {
+				res.should.eql(_.sortBy(_.where(orig,{gender:'male'}),"age").slice(0,2));
+				done();
+		  });
+		});
+		
+		
+		
 		it('should delete a single object with db.del', function(done){
 		  db.del("user",orig[0].id,function (err,res) {
 				db.get("user",function (err,res) {
@@ -224,6 +272,9 @@ describe('multiwaydb', function(){
 		});
 		it('should find a single object by search', function(done){
 			r.get('/user').query({search:JSON.stringify({name:"john"})}).expect(200,[].concat(raw.user["1"]),done);
+		});
+		it('should find multiple objects by search', function(done){
+			r.get('/user').query({search:JSON.stringify({gender:"male"})}).expect(200,_.where(orig,{gender:"male"}),done);
 		});
 		it('should return 404 for getting unknown object', function(done){
 		  r.get('/user/100').expect(404,done);

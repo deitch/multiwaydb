@@ -76,6 +76,35 @@ Which essentially takes today's date as a full ISO string, randomly jumbles the 
 
 For production use, you should use your own algorithms, or perhaps GUIDs. Either way, if you do not want to use this algorithm just override it by setting your own `id` property on the object.
 
+### Options for searching
+
+The `db.find()` API to search for items has additional options beyond the usual searchjs options. 
+
+##### Field matches
+The normal usage of `search` is to match field names and values, using standard [searchjs](https://github.com/deitch/searchjs) 
+
+Thus, `db.find('users',{age:35,gender:'male'}, callback)` will find all records from the "users" table whose age field equals 35 and whose gender field equals "male".
+
+You can use extended and complex [searchjs](https://github.com/deitch/searchjs) searches; see the documentation there for complex matches.
+
+##### Return options
+In addition to the usual fields, any field in the search that begins with "$s." will be treated as a search option. It will **not** be passed to search js. Instead, it will be used to determine *how* to return results to you, and which ones. The following fields currently are supported. Examples follow.
+
+* `$s.sort`: sort by a particular field, whether ascending or descending. Key is the term `$s.sort`, value is the name of the field. If it is given as is, sort ascending; if preceded by `-`, then descending.
+* `$s.count`: return only a the first `count` number of records. Key is the term `$s.count`, value is an integer, how many records to return. It can be an actual number, or a string that can be converted to a number via `parseInt(count,10)`
+
+Here are some examples. 
+
+* Get all of the users: `db.find('users',{},callback)`
+* Get all of the users who are male: `db.find('users',{gender:'male'},callback)`
+* Get the first 20 male users: `db.find('users',{gender:'male',`$s.count`:20},callback)` - note that these are the first 20 in the database, not necessarily sorted in any given order.
+* Get all of the users sorted by ascending age: `db.find('users',{'$s.sort':'age'},callback)`
+* Get all of the users sorted by descending age: `db.find('users',{'$s.sort':'-age'},callback)`
+* Get the 20 youngest users: `db.find('users',{'$s.sort':'age','$s.count':20},callback)` - note that we sort ascending by age, so the first `$s.count` (i.e. `20` as given) users are the youngest
+* Get the 10 oldest male users: `db.find('users',{'gender':'male','$s.sort':'-age','$s.count':20},callback)`
+
+
+
 
 ### What is returned?
 
@@ -100,7 +129,7 @@ Get the record "key" from "table". Can have multiple keys, separated by commas
 
     GET /table?search={a:1,b:2}
 
-Search in table for records that match the value of "search" parameter. Parameter must be valid JSON that matches the jsql syntax of searchjs package, and should be urlencoded.
+Search in table for records that match the value of "search" parameter. Parameter must be valid JSON that matches the parameters passed for `search` in `db.find()` in the direct API, and should be urlencoded. You can include the extended search options. See above at "Options for Searching".
 
 
 #### PUT
