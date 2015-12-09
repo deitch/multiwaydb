@@ -4,6 +4,7 @@ var db = require('../lib/multiwaydb'), _ = require('lodash'), should = require('
 async = require('async'),
 path = __dirname+'/resources/db.json', port = 30000, url = 'http://localhost:'+port, raw = _.cloneDeep(require(path)), r, client,
 orig = _.values(raw.user), totalrecs = orig.length,
+userarray = raw.userarray,
 noexist = totalrecs+100;
 
 
@@ -26,6 +27,13 @@ describe('multiwaydb', function(){
 				done();
 	    });
 	  });
+		it('should have loaded data in array format', function(done){
+			db.get("userarray",function (err,res) {
+				_.size(res).should.equal(userarray.length);
+				res.should.eql(userarray);
+				done();
+			});
+		});
 		it('should clear a table', function(done){
 		  db.clearTable("user",function () {
 				db.get("user",function (err,res) {
@@ -139,6 +147,20 @@ describe('multiwaydb', function(){
 		it('should find multiple objects by search', function(done){
 		  db.find("user",{gender:"male"},function (err,res) {
 				res.should.eql(_.where(orig,{gender:"male"}));
+				done();
+		  });
+		});
+
+
+		it('should find a single object in array by search', function(done){
+		  db.find("userarray",{name:"john"},function (err,res) {
+				res.should.eql(_.where(userarray,{name:"john"}));
+				done();
+		  });
+		});
+		it('should find multiple objects in array by search', function(done){
+		  db.find("userarray",{gender:"male"},function (err,res) {
+				res.should.eql(_.where(userarray,{gender:"male"}));
 				done();
 		  });
 		});
